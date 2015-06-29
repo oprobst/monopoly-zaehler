@@ -27,6 +27,8 @@
 
 #define ZS "00000"
 
+#define BILDSCHIRMSCHONER (300000)
+
 #include <LiquidCrystal.h>
 
 LiquidCrystal lcd (13, 12, 11, 10, 9, 8, 7, 6, 5, 4);
@@ -75,17 +77,20 @@ char *  gemeinschaftsKarten [] = {
   , "Du kommst aus dem   Gefaengnis frei."
 };
 
-char letzteTransaktion [4] [21]= {
+char letzteTransaktion [4] [21] = {
   " Sp 0 \176 0000 \176 Sp 0\0",
   " Sp 0 \176 0000 \176 Sp 0\0",
   " Sp 0 \176 0000 \176 Sp 0\0",
   " Sp 0 \176 0000 \176 Sp 0\0"
 };
 short letzteTransaktionIndex = 0;
-char* currentEntryBuffer= new char [20];
+char* currentEntryBuffer = new char [20];
 
 short aktGemeinschaftskarte = 0;
 short aktEreigniskarte = 0;
+
+long zeitSeitLetzterAktion = millis();
+boolean activeDisplay = true;
 
 void setup() {
   if (LOG)Serial.begin(9600);
@@ -99,7 +104,7 @@ void setup() {
   pinMode(BTN_R, INPUT);
   pinMode(DIMLCD, OUTPUT);
   pinMode(VOLTPIN, INPUT);
-  analogWrite(DIMLCD, 700);
+  digitalWrite(DIMLCD, HIGH);
   if (LCD)lcd.begin(20, 4);
   resetGame ();
 }
@@ -119,9 +124,18 @@ void resetGame () {
   if (LCD) lcd.setCursor (6, 3);
   if (LCD) lcd.print(" kalt.org");
 
+  digitalWrite(LED_RED, LOW);
+  digitalWrite(LED_GREEN, LOW);
+  if (!DEBUG) delay (INTRO_DURATION);
+  while (checkForButton() == 0){
+    digitalWrite(DIMLCD, LOW);
+    delay (200);
+  }
+  
+  digitalWrite(DIMLCD, HIGH);
   digitalWrite(LED_RED, HIGH);
   digitalWrite(LED_GREEN, HIGH);
-  if (!DEBUG) delay (INTRO_DURATION);
+  warte (INTRO_DURATION);
 
   for (int i = 1; i < 8; i++) {
     konto [i] = START_GELD;
@@ -218,13 +232,37 @@ void loop() {
     zeigeLetzteTransaktionen();
   }
 
+  checkBildschirmschoner();   
   delay(2);
 }
 
+void checkBildschirmschoner (){
+  if (zeitSeitLetzterAktion + BILDSCHIRMSCHONER < millis() && activeDisplay) {
+    digitalWrite(DIMLCD, LOW);
+    warte (300);
+    digitalWrite(DIMLCD, HIGH);
+    warte (300);
+    digitalWrite(DIMLCD, LOW);
+    warte (300);
+    digitalWrite(DIMLCD, HIGH);
+    warte (300);
+    digitalWrite(DIMLCD, LOW);
+    activeDisplay = false;
+    lcd.noDisplay();
+  } 
+  digitalWrite(DIMLCD, activeDisplay);
+  lcd.display();
+}
 
 //Testet, welcher Knopf gedrückt wurde. Wenn TOP und BOTTOM gleichzeitig, dann wartet
 // die Methode ob in 5 Sekunden immer noch beide gedrückt sind und started dann das Spiel neu.
 short checkForButton () {
+  if (digitalRead(BTN_T) || digitalRead(BTN_B) || digitalRead(BTN_L) || digitalRead(BTN_R)) {
+    zeitSeitLetzterAktion = millis ();
+    activeDisplay = true;
+  }
+
+
   if (digitalRead(BTN_T) == HIGH && digitalRead(BTN_B) == HIGH) {
     if (LCD) lcd.clear();
     if (LCD) lcd.print("Halten fuer Neustart");
@@ -310,13 +348,13 @@ void zieheKarte() {
 void warte (int zeit) {
   short ledOn = 0;
   for (int i = 0; i < zeit; i += 10) {
-    if (ledOn++ >= 30) {
+    if (ledOn++ >= 50) {
       ledOn = 0;
     }
     digitalWrite(LED_GREEN, LOW);
     digitalWrite(LED_RED, LOW);
 
-    if (ledOn < 15) {
+    if (ledOn < 25) {
       if (LCD) lcd.setCursor (19, 4);
       if (LCD) lcd.print (" ");
       if (LCD) lcd.setCursor (0, 4);
