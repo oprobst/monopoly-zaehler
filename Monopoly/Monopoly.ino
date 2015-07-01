@@ -39,41 +39,42 @@ int konto [8] = {0, 0, 0, 0, 0, 0, 0};
 short spielerSender = 0;
 short spielerEmpf = 0;
 
+long resetTime = 0;
 char * ereignisKarten [] = {
-  "Bank-Irrtum         Ziehe +M200 ein"
-  , "Lebensversicherung  faellig. +M100"
-  , "Urlaubsgeld! Du     erhaelst +M100"
-  , "Arztkosten.         Zahle -M50"
-  , "Ruecke vor bis LOS. (+M200)"
-  , "Zahle Schulgeld:    -M50"
-  , "Stra\342enausbau: -M40 /Haus, -M115/Hotel"
-  , "Schoenheitswettbew. +M10"
-  , "Lagerverkaeufe      +M50"
-  , "Du erbst +M100.       "
-  , "Geburtstag. Jeder   schenkt +M10"
-  , "Beratungsgebuehr von+M25"
-  , "Gehe in's Gefaengnis(direkt)"
-  , "KrankenhausgebuehrenZahle -M100."
+  "Bank-Irrtum         Ziehe +$200 ein"
+  , "Lebensversicherung  faellig. +$100"
+  , "Urlaubsgeld! Du     erhaelst +$100"
+  , "Arztkosten.         Zahle -$50"
+  , "Ruecke vor bis LOS. (+$200)"
+  , "Zahle Schulgeld:    -$50"
+  , "Stra\342enausbau: -$40 /Haus, -$115/Hotel"
+  , "Schoenheitswettbew. +$10"
+  , "Lagerverkaeufe      +$50"
+  , "Du erbst +$100.       "
+  , "Geburtstag. Jeder   schenkt +$10"
+  , "Beratungsgebuehr von$25 eingenommen"
+  , "Gehe in's Gefaengnis(kein LOS)"
+  , "KrankenhausgebuehrenZahle -$100."
   , "Du kommst aus dem   Gefaengnis frei."
-  , "Steuerrueckzahlung. +M20."
+  , "Steuerrueckzahlung. +$20."
 };
 
 char *  gemeinschaftsKarten [] = {
-  "Renovieren:-M25  /Haus, -M100/Hotel."
-  , "Dividende von M50.   "
-  , "Ruecke vor bis LOS. (+M200)"
-  , "Gehe in's Gefaengnis(direkt)"
-  , "Vor bis Werk.       Zahle 2xW6 * 10"
-  , "Vor bis Opernplatz. Bei LOS, +M200"
-  , "Bausparvertrag      +M150"
-  , "Vor bis Suedbahnhof.Bei LOS, +M200"
+  "Renovieren:-$25  /Haus, -$100/Hotel."
+  , "Dividende von $50.   "
+  , "Ruecke vor bis LOS. (+$200)"
+  , "Gehe in's Gefaengnis(Kein LOS)"
+  , "Vor bis Werk.       Miete=2xW6 * 10"
+  , "Vor bis Opernplatz. Bei LOS, +$200"
+  , "Bausparvertrag      +$150"
+  , "Vor bis Suedbahnhof.Bei LOS, +$200"
   , "Ruecke vor bis zur  Schlossallee"
   , "Vor bis naechst. BhfDoppelte Miete!"
   , "Vor bis naechst. BhfDoppelte Miete!"
-  , "Strafzettel!        -M15."
+  , "Strafzettel!        -$15."
   , "3 Felder zurueck.    "
-  , "Vorstand gewaehlt   Zahle jedem -M50."
-  , "Vor bis Seestraße.  Bei LOS, +M200"
+  , "Vorstand gewaehlt   Zahle jedem -$50."
+  , "Vor bis Seestraße.  Bei LOS, +$200"
   , "Du kommst aus dem   Gefaengnis frei."
 };
 
@@ -113,7 +114,7 @@ void setup() {
 
 // Setzt alle Spielstände wieder auf Anfang.
 void resetGame () {
-
+  resetTime = millis ();
   if (LCD)lcd.clear ();
   if (LCD)  lcd.setCursor (0, 0);
   if (LCD)  lcd.print("Unterwassermonopoly");
@@ -300,6 +301,7 @@ void wuerfle () {
     delay (i * 35);
   }
   updateBatterieanzeige();
+  updateLaufzeit();
   warte (1500);
 }
 
@@ -312,7 +314,7 @@ void zieheKarte() {
   if (LCD) lcd.print("^^ Ereigniskarte ^^");
   if (LOG) Serial.println( "^^ Ereigniskarte ^^" );
   if (LCD) lcd.setCursor (0, 2);
-  if (LCD) lcd.print("\177    Abbruch    \176");
+  if (LCD) lcd.print("\177     Abbruch      \176");
   if (LOG)Serial.println( "<<    Abbruch    >>" );
   if (LCD) lcd.setCursor (0, 3);
   if (LCD) lcd.print("vv Gemeinschaft  vv");
@@ -456,12 +458,12 @@ void geldTransfer() {
         return;
       } else {
         if (btnRes == BTN_T) {
-          money = money + pow(10, currEdit - 1);
+         money = money + pow(10.0, currEdit - 1);
           if (money > 9999) {
             money = 9999;
           }
         } else if (btnRes == BTN_B) {
-          money = money - pow(10, currEdit - 1);
+          money = money - pow(10.0, currEdit - 1);
           if (money < 0) {
             money = 0;
           }
@@ -540,6 +542,15 @@ void updateKontostand () {
   if (LOG) Serial.println ("");
   updateBatterieanzeige();
   updateGeldTransferRichtung();
+  updateLaufzeit();
+}
+
+void updateLaufzeit (){
+    int laufzeit = (millis () - resetTime) / 60000;
+    if (LCD) lcd.setCursor (1, 3);
+    if (laufzeit < 999) {
+      if (LCD) lcd.print(laufzeit); 
+    }
 }
 
 void updateBatterieanzeige() {
