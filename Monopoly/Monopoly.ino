@@ -6,10 +6,10 @@
 #define LED_RED 2
 #define LED_GREEN 3
 
-#define BTN_B 15
-#define BTN_L 16
-#define BTN_T 18
-#define BTN_R 17
+#define BTN_B 18
+#define BTN_L 17
+#define BTN_T 15
+#define BTN_R 16
 
 #define VOLTPIN A0
 
@@ -19,7 +19,7 @@
 
 #define LOS_EINKOMMEN 200
 
-#define INTRO_DURATION 5000
+#define INTRO_DURATION 6000
 
 #define DEBUG false
 #define LOG false
@@ -27,7 +27,7 @@
 
 #define ZS "00000"
 
-#define BILDSCHIRMSCHONER (300000)
+#define BILDSCHIRMSCHONER (1800000)
 
 #include <LiquidCrystal.h>
 
